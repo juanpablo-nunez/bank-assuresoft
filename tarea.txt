@@ -1,0 +1,94 @@
+---------------------------------------------------------
+	Tarea: Implement a OO Model using SOLID principles.
+---------------------------------------------------------
+
+
+Se debe implementar realizar pagos que soporten cualquier "PaymentProcessor", ej puede ser "Stripe" o puede ser "Square"
+todos ellos soportan un "PaymentMethod"
+
+
+	El PaymentProcessor , solo tiene un metodo, que recibe un "amount" para realizar el pago. el cual retorna:
+		true, si el pago se realizo con exito
+		false, si el pago no se completo con exito.
+
+		Como logica de negocio en las implementaciones (solo para diferenciar )
+			*Stripe: En las implementaciones de Stripe retornar True, si la fecha actual es es par. sino False.
+			*Square: True, si el dia actual es impar, sino False.
+
+
+ Estos "PaymentMethod" implementar 2 metodos de pago:
+	1.- por medio de un "PayPalAccount" que tiene tiene como dato el email de la cuenta.
+	2.- por medio de un "CreditCard". Estas CreditCards pueden ser de 3 tipos.
+
+			- AmericanExpress
+			- MasterCard
+			- Visa
+
+
+			* todas ellas tienen como datos:
+				:: cardNumber, cvv, expirationDate
+
+			* la tarjeta Visa tiene como dato adicional
+				:: cardHolder
+
+
+	3.- Todos los metodos de pago: "PayPalAccount" y "CreditCard", deben poder generar
+		su informacion contenida para imprimir en consola de la siguiente manera.
+
+			PayPalAccount -> "Account: {email}"
+			CreditCard 	  ->
+				Tarjetas AmericanExpress y MasterCard ->	"CardNumber: {cardNumber}, CVV: {cvv}, Expiration: {expirationDate}, CalculatedTax: {tax}"
+				Tarjetas Visa ->  "CardNumber: {cardNumber}, CardHolder: {cardHolder}, Tax:{tax}"
+
+		3.1.- Las CreditCard, calculan su tax(), de la siguiente forma:
+
+					AmericanExpress tiene un DEFAULT_TAX = 1.02
+					MasterCard tiene un DEFAULT_TAX = 1.01
+					Visa tieneun DEFAULT_TAX = 1.03
+
+				- si la fecha actual es [Sabado,Domingo] -> al DEFAULT_TAX se le suma 0.01,
+
+	4.- En los PaymentMethod,
+
+			Al pagar el metodo "pay" debe comportarse de la siguiente forma
+
+			- recibe solo el monto que se requiere pagar, obviamente el "amount",
+
+			:: Para PayPal, cobra directamente el "amount"
+				y luego imprime: la informacion del PayPalAccount y el status retornado al procesar el pago.
+				si el status es TRUE, imprime "SUCCES" + la informacion "Imprimible" del PayPalAccount -> "Account: {email}"
+				como se ha explicado antes.
+
+			:: Para las CreditCard, cobra el el "amount" + el tax(), calculado de la tarjeta de credito como se explico antes.
+			   Luego imprime el status, y la informacion del CreditCard como se explico antes.
+			   CreditCard 	  ->
+				Tarjetas AmericanExpress y MasterCard ->	"CardNumber: {cardNumber}, CVV: {cvv}, Expiration: {expirationDate}, CalculatedTax: {tax}"
+				Tarjetas Visa ->  "CardNumber: {cardNumber}, CardHolder: {cardHolder}, Tax:{tax}"
+
+
+
+Tips:
+
+	inteface Printable {
+		String printableInfo();
+	}
+
+	interface PaymentProcessor {
+		boolean processPayment( double amount );
+	}
+
+
+	public class MainTest {
+		public static void main(String[] args) {
+			PaymentProcessor stripe = new StripePaymentProcessor();
+
+			PaymentMethod pp = new PayPalPayment(stripe, new PayPalAccount("rory@infonet.com.bo") );
+			pp.pay(50);
+
+			PaymentMethod ccv = new CreditCardPayment(stripe, new Visa("Juan Perez","11122112254","113","07/23" ));
+			ccv.pay(67);
+
+			CreditCardPayment ccm = new CreditCardPayment(stripe, new MasterCard("11122323112254","363","07/28" ));
+			ccm.pay(67);
+		}
+	}
